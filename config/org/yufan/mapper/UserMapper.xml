@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ 
+  <mapper namespace="org.yufan.mapper.UserMapper">
+       <resultMap type="user" id="userResultMap">
+           <id column="ID" property="id"/>
+           <result column="NAME" property="name"/>
+           <result column="PASSWORD" property="password"/>
+           <result column="DESCRIPTION" property="description"/>
+           <result column="SALT" property="salt" />
+           
+           <!-- 配置一对多的关系 -->
+		<collection property="roles" column="ID"
+			select="org.yufan.mapper.RoleMapper.queryRoleByUserId" />
+			
+       </resultMap>
+       
+       <sql id="queryUserFrom">
+		SELECT
+		ID,NAME,PASSWORD,DESCRIPTION,SALT FROM USER
+	   </sql>
+	
+	<select id="queryUserList" parameterType="user" resultMap="userResultMap" useCache="false">
+		<include refid="queryUserFrom" />
+		 
+	   </select>
+	   
+	   
+	   <select id="queryUserByWhere" parameterType="user" resultMap="userResultMap">
+		<include refid="queryUserFrom" />
+		 <where>
+		        <!-- 寻找用户的时候，name为必传参数 -->
+				NAME =#{name}
+				<if test="password!=null and password!=''">
+					AND PASSWORD=#{password}
+				</if>
+		
+		</where>
+	   </select>
+	
+	
+       <insert id="saveUser" parameterType="user">
+          <selectKey keyColumn="ID" keyProperty="id" resultType="int"
+			order="AFTER">
+			SELECT LAST_INSERT_ID();
+		  </selectKey>
+       INSERT INTO USER(NAME,PASSWORD,DESCRIPTION,SALT) 
+       VALUES(#{name},#{password},#{description},#{salt})
+       </insert>
+       
+       <select id="findUserById" parameterType="int" resultMap="userResultMap">
+       <include refid="queryUserFrom" />
+		WHERE ID=#{id}
+       </select>
+       
+       <update id="updateUser" parameterType="user">
+       UPDATE USER SET
+		PASSWORD=#{password},DESCRIPTION=#{description},SALT=#{salt}
+		WHERE
+		ID=#{id}
+       </update>
+       
+       <delete id="deleteUserById" parameterType="int">
+       DELETE FROM USER WHERE ID=#{id}
+       </delete>
+       
+       <delete id="deleteUserRoleRelation" parameterType="int">
+		DELETE
+		FROM
+		USER_ROLE WHERE USER_ID=#{userId}
+	</delete>
+	
+	<insert id="insertUserRoleRelation" parameterType="map">
+		INSERT
+		INTO
+		USER_ROLE(USER_ID,ROLE_ID)
+		VALUES(#{userId},#{roleId})
+	</insert>
+	
+  </mapper>

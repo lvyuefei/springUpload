@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.yufan.mapper.FileMapper">
+
+	<resultMap type="file" id="fileResultMap">
+		<id column="ID" property="id" />
+		<result column="NAME" property="name" />
+		<result column="PATH" property="path" />
+		<result column="EXT" property="ext" />
+		<result column="DESCRIPTION" property="description" />
+		<result column="CREATED" property="created" />
+		<result column="UPDATED" property="updated" />
+
+		<!-- 配置一对一的映射 -->
+		<association property="user" column="USER_ID"
+			select="org.yufan.mapper.UserMapper.findUserById" />
+	</resultMap>
+
+
+	<sql id="queryFileFrom">
+		SELECT
+		ID,NAME,PATH,EXT,DESCRIPTION,CREATED,UPDATED,USER_ID
+		FROM FILE
+	</sql>
+
+
+	<select id="queryFileByWhere" parameterType="file" resultMap="fileResultMap" useCache="false">
+		<include refid="queryFileFrom" />
+		
+	</select>
+
+
+	<insert id="saveFile" parameterType="file">
+	<selectKey keyColumn="ID" keyProperty="id" resultType="int"
+			order="AFTER">
+			SELECT LAST_INSERT_ID();
+		  </selectKey>
+		INSERT INTO
+		FILE(NAME,PATH,EXT,DESCRIPTION,CREATED,UPDATED,USER_ID)
+		VALUES(#{name},#{path},#{ext},#{description},#{created},#{updated},#{userId})
+	</insert>
+
+	<update id="updateFile" parameterType="file">
+		UPDATE FILE
+		<set>
+			<if test="name!=null and name!=''">
+				NAME=#{name},
+			</if>
+			<if test="path!=null and path!=''">
+				 PATH=#{path},
+			</if>
+			<if test="ext!=null and ext!=''">
+				EXT=#{ext},
+			</if>
+			<if test="description!=null and description!=''">
+				DESCRIPTION=#{description},
+			</if>
+			<if test="updated!=null">
+				UPDATED=#{updated},
+			</if>
+		</set>
+		WHERE ID=#{id}
+	</update>
+
+	<delete id="deleteFileById" parameterType="int">
+		DELETE FROM
+		FILE WHERE
+		ID=#{id}
+	</delete>
+
+
+
+</mapper>

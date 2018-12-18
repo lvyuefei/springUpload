@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="org.yufan.mapper.RoleMapper">
+       <resultMap type="role" id="roleResultMap">
+           <id column="ID" property="id"/>
+           <result column="NAME" property="name"/>
+           <result column="DESCRIPTION" property="description"/>
+           
+           <!-- 配置一对多的关系 -->
+		<collection property="privileges" column="ID"
+			select="org.yufan.mapper.PrivilegeMapper.queryPrivilegeByRoleId" />
+			
+       </resultMap>
+       
+       <sql id="queryRoleFrom">
+		SELECT
+		ID,NAME,DESCRIPTION FROM ROLE
+	</sql>
+       
+       <!-- 根据用户id查询对应的角色 -->
+	<select id="queryRoleByUserId" parameterType="int" resultMap="roleResultMap">
+		SELECT
+		R.ID,
+		R. NAME,
+		R.DESCRIPTION
+		FROM
+		USER_ROLE UR,
+		ROLE R
+		WHERE
+		UR.USER_ID = #{userId}
+		AND UR.ROLE_ID = R.ID
+	</select>
+	
+	
+	
+	<select id="queryRoleList" parameterType="role" resultMap="roleResultMap" useCache="false">
+		<include refid="queryRoleFrom" />
+		
+	</select>
+	
+	<select id="queryRoleByWhere" parameterType="role" resultMap="roleResultMap">
+		<include refid="queryRoleFrom" />
+		<where>
+			<if test="name!=null and name!=''">
+				AND NAME=#{name}
+			</if>
+		</where>
+	</select>
+	
+       <insert id="saveRole" parameterType="role">
+      
+       <selectKey keyColumn="ID" keyProperty="id" resultType="int"
+			order="AFTER">
+			SELECT LAST_INSERT_ID();
+		</selectKey>
+     
+       INSERT INTO ROLE(NAME,DESCRIPTION) 
+       VALUES(#{name},#{description})
+       </insert>
+       
+       <select id="findRoleById" parameterType="int" resultMap="roleResultMap">
+       SELECT * FROM ROLE WHERE ID=#{id}
+       </select>
+       
+       <update id="updateRole" parameterType="role">
+       UPDATE ROLE SET NAME=#{name},DESCRIPTION=#{description} WHERE ID=#{id}
+       </update>
+       
+       <delete id="deleteRoleById" parameterType="int">
+       DELETE FROM ROLE WHERE ID=#{id}
+       </delete>
+       
+       <delete id="deleteRolePrivilegeRelation" parameterType="int">
+		DELETE
+		FROM ROLE_PRIVILEGE WHERE ROLE_ID=#{roleId}
+	</delete>
+
+	<insert id="insertRolePrivilegeRelation" parameterType="map">
+		INSERT
+		INTO ROLE_PRIVILEGE(ROLE_ID,PRIVILEGE_ID)
+		VALUES(#{roleId},#{privilegeId})
+	</insert>
+	
+  </mapper>
